@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="aurora" name="setup_tf_node" type="setup_tf_node" />
+  <node pkg="aurora" name="odom_node" type="odom_node" />
+</launch>

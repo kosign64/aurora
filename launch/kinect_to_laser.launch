@@ -1,0 +1,10 @@
+<launch>
+  <include file="$(find freenect_launch)/launch/freenect.launch">
+    <arg name="depth_registration" value="true"/>
+  </include>
+
+  <node pkg="depthimage_to_laserscan" name="depthimage_to_laserscan" type="depthimage_to_laserscan">
+    <remap from="image" to="camera/depth_registered/image"/>
+    <remap from="camera_info" to="camera/registered/camera_info"/>
+  </node>
+</launch>
