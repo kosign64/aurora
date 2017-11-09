@@ -25,13 +25,13 @@ static void jointCallback(const sensor_msgs::JointState &msg)
 
     double velocity = msg.velocity[1] * 0.00385;
     double steeringAngle;
-    if(steeringAngle <= 0)
+    if(msg.position[0] <= 0)
     {
-        steeringAngle = msg.position[0] * (0.006135923151542565 / 1.95);
+        steeringAngle = -msg.position[0] * (0.006135923151542565 / 1.95);
     }
     else
     {
-        steeringAngle = msg.position[0] * (0.006135923151542565 / 1.4);
+        steeringAngle = -msg.position[0] * (0.006135923151542565 / 1.4);
     }
 
     if(dt > 0)
