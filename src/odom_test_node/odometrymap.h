@@ -36,7 +36,11 @@ private:
     const double ROBOT_WIDTH;
     const double ROBOT_LENGTH;
 
+    void drawGrid(QPainter &painter, const double scaleMeter);
     void drawMap(QPainter &painter, const double scaleMeter);
+    void drawRobot(QPainter &painter, const double scaleMeter);
+    void drawLaser(QPainter &painter, const double scaleMeter);
+
 Q_SIGNALS:
 
 public Q_SLOTS:

@@ -31,18 +31,36 @@ void OdometryMap::paintEvent(QPaintEvent *)
     painter.drawRect(0, 0, width(), height());
     painter.setPen(pen);
     painter.translate(width() / 2., height() / 2.);
-    for(double x = (-width() / 2.); x < (width() / 2.); x += scaleMeter)
+    painter.translate(translateX_, translateY_);
+    if(!map_.empty()) drawMap(painter, scaleMeter);
+    drawGrid(painter, scaleMeter);
+    drawRobot(painter, scaleMeter);
+    if(!laserRanges_.empty()) drawLaser(painter, scaleMeter);
+}
+void OdometryMap::drawGrid(QPainter &painter, const double scaleMeter)
+{
+    QPen pen(Qt::white);
+    painter.setPen(pen);
+
+    for(double x = 0; x < (width() * 2.); x += scaleMeter)
     {
         painter.drawLine(x, -height() / 2., x, height() / 2.);
     }
-    for(double y = 0; y < (height() / 2.); y += scaleMeter)
+    for(double x = 0; x > (-width() * 2.); x -= scaleMeter)
     {
-        painter.drawLine((-width() / 2.), y, (width() / 2.), y);
+        painter.drawLine(x, (-height() * 2.), x, (height() * 2.));
     }
-    for(double y = 0; y > (-height() / 2.); y -= scaleMeter)
+
+    for(double y = 0; y < (height() * 2.); y += scaleMeter)
     {
-        painter.drawLine((-width() / 2.), y, (width() / 2.), y);
+        painter.drawLine((-width() * 2.), y, (width() * 2.), y);
     }
+    for(double y = 0; y > (-height() * 2.); y -= scaleMeter)
+    {
+        painter.drawLine((-width() * 2.), y, (width() * 2.), y);
+    }
+}
+
 void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
 {
     painter.save();
@@ -85,8 +103,15 @@ void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
     }
     painter.restore();
 }
+
+void OdometryMap::drawRobot(QPainter &painter, const double scaleMeter)
+{
+    painter.save();
+    QPen pen(Qt::green);
+    QBrush brush(Qt::gray);
     // X - forward moving
-    painter.translate(yPosition_  * scaleMeter, -xPosition_  * scaleMeter);
+    painter.translate(yPosition_  * scaleMeter,
+                      -xPosition_  * scaleMeter);
     painter.rotate(anglePosition_ * 180 / M_PI);
     brush.setColor(Qt::gray);
     pen.setColor(Qt::green);
@@ -102,22 +127,30 @@ void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
     painter.setBrush(brush);
     painter.drawRect(-robotWidth / 4, -robotLength / 2,
                      robotWidth / 2, robotWidth / 2);
-    if(laserRanges_.empty()) return;
-    painter.translate(0, -robotLength / 2.);
-    brush.setColor(Qt::green);
+    painter.restore();
+}
+
+void OdometryMap::drawLaser(QPainter &painter, const double scaleMeter)
+{
+    painter.save();
+    QBrush brush(Qt::green);
     painter.setBrush(brush);
     painter.drawEllipse(QPointF(0, 0), 0.2 * scaleMeter,
                         0.2 * scaleMeter);
-    painter.rotate(laserAngleMin_ * 180. / M_PI);
+    painter.rotate(-laserAngleMin_ * 180. / M_PI);
     const double angleStep = laserAngleIncrement_ * 180. / M_PI;
     brush.setColor(Qt::red);
     painter.setBrush(brush);
     for(const auto &range : laserRanges_)
     {
-        painter.drawEllipse(QPointF(0, -range * scaleMeter),
-                            0.05 * scaleMeter, 0.05 * scaleMeter);
-        painter.rotate(angleStep);
+        if(range > 0 && range < 100)
+        {
+            painter.drawEllipse(QPointF(0, -range * scaleMeter),
+                                0.05 * scaleMeter, 0.05 * scaleMeter);
+        }
+        painter.rotate(-angleStep);
     }
+    painter.restore();
 }
 
 void OdometryMap::setRobotPosition(double x, double y, double angle)

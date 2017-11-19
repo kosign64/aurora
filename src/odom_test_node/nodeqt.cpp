@@ -17,12 +17,12 @@ static void jointCallback(const sensor_msgs::JointState &msg)
             msg.header.stamp.nsec;
     double dt = (currentTime - prevTime) / 10e9;
     prevTime = currentTime;
-    globalThis->getPositions(msg.velocity[1], msg.position[0], dt);
+    globalThis->setPositions(msg.velocity[1], msg.position[0], dt);
 }
 
 static void laserCallback(const sensor_msgs::LaserScan &msg)
 {
-    globalThis->getLaser(msg.angle_min, msg.angle_increment,
+    globalThis->setLaser(msg.angle_min, msg.angle_increment,
                          msg.ranges);
 }
 
@@ -55,7 +55,7 @@ static void odometryCallback(const nav_msgs::Odometry &msg)
 NodeQt::NodeQt(int argc, char *argv[])
 {
     globalThis = this;
-    ros::init(argc, argv, "node_name");
+    ros::init(argc, argv, "aurora_odom_test");
     node_ = new ros::NodeHandle();
     velocityPublisher_ = node_->advertise<std_msgs::Float64>("/ur_hardware_driver/velocity_controller/command", 1000);
     steeringAnglePublisher_ = node_->advertise<std_msgs::Float64>("/ur_hardware_driver/steering_controller/command", 1000);
@@ -67,7 +67,7 @@ NodeQt::NodeQt(int argc, char *argv[])
                                            odometryCallback);
 }
 
-void NodeQt::getPositions(double velocity, double angle, double dt)
+void NodeQt::setPositions(double velocity, double angle, double dt)
 {
     velocity = velocity * 0.00385;
     if(angle <= 0)
@@ -78,13 +78,11 @@ void NodeQt::getPositions(double velocity, double angle, double dt)
     {
         angle = angle * (0.006135923151542565 / 1.4);
     }
-//    velocity = velocity * 0.00382;
-//    angle = angle * (0.006135923151542565 / 2);
 
     Q_EMIT sendParams(velocity, angle, dt);
 }
 
-void NodeQt::getLaser(float angleMin, float angleIncrement,
+void NodeQt::setLaser(float angleMin, float angleIncrement,
                       const vector<float> &ranges)
 {
     Q_EMIT sendLaser(angleMin, angleIncrement, ranges);

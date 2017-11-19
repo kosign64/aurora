@@ -12,10 +12,10 @@ class NodeQt : public QThread
     Q_OBJECT
 public:
     NodeQt(int argc, char *argv[]);
-    void getPositions(double velocity, double angle, double dt);
-    void getLaser(float angleMin, float angleIncrement,
-                  const vector<float> &ranges);
     ~NodeQt();
+    void setPositions(double velocity, double angle, double dt);
+    void setLaser(float angleMin, float angleIncrement,
+                  const vector<float> &ranges);
     void setMap(float xOrigin, float yOrigin, float angle,
                 int32_t width, int32_t height, float resolution,
                 const vector<int8_t> &map);
