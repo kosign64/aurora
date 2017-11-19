@@ -2,6 +2,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/LaserScan.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/tf.h>
 #include <stdint-gcc.h>
@@ -25,6 +26,16 @@ static void laserCallback(const sensor_msgs::LaserScan &msg)
                          msg.ranges);
 }
 
+static void mapCallback(const nav_msgs::OccupancyGrid &msg)
+{
+    globalThis->setMap(msg.info.origin.position.x,
+                       msg.info.origin.position.y,
+                       msg.info.origin.orientation.z,
+                       msg.info.width,
+                       msg.info.height,
+                       msg.info.resolution,
+                       msg.data);
+}
 
 static void odometryCallback(const nav_msgs::Odometry &msg)
 {
@@ -50,6 +61,8 @@ NodeQt::NodeQt(int argc, char *argv[])
     steeringAnglePublisher_ = node_->advertise<std_msgs::Float64>("/ur_hardware_driver/steering_controller/command", 1000);
     jointSubscriber_ = node_->subscribe("/joint_states", 1000, jointCallback);
     laserSubscriber_ = node_->subscribe("/scan", 1000, laserCallback);
+    mapSubcriber_ = node_->subscribe("/rtabmap/proj_map", 1000,
+                                     mapCallback);
     odometrySubscriber_ = node_->subscribe("/rtabmap/odom", 1000,
                                            odometryCallback);
 }
@@ -77,6 +90,18 @@ void NodeQt::getLaser(float angleMin, float angleIncrement,
     Q_EMIT sendLaser(angleMin, angleIncrement, ranges);
 }
 
+void NodeQt::setMap(float xOrigin, float yOrigin, float angle,
+                    int32_t width, int32_t height, float resolution,
+                    const vector<int8_t> &map)
+{
+    emit sendMap(xOrigin,
+                 yOrigin,
+                 angle,
+                 width,
+                 height,
+                 resolution,
+                 map);
+}
 
 void NodeQt::setOdometry(double x, double y, double angle)
 {
@@ -98,11 +123,22 @@ void NodeQt::run()
 //    {
 //        ranges.push_back(2);
 //    }
+//    vector<int8_t> data;
+//    int32_t width = 5;
+//    int32_t height = 5;
+//    for(int i = 0; i < width; ++i)
+//    {
+//        for(int j = 0; j < height; ++j)
+//        {
+//            data.push_back(0);
+//        }
+//    }
     while(ros::ok())
     {
         ros::spinOnce();
         //Q_EMIT sendParams(0.3, 0.5, 0.02);
         //Q_EMIT sendLaser(angleMin, angleIncrement, ranges);
+        //Q_EMIT sendMap(0, 0, 0, width, height, 0.1, data);
         loopRate.sleep();
     }
 }

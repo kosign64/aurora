@@ -43,6 +43,48 @@ void OdometryMap::paintEvent(QPaintEvent *)
     {
         painter.drawLine((-width() / 2.), y, (width() / 2.), y);
     }
+void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
+{
+    painter.save();
+    const double mapScale = mapResolution_ * scaleMeter;
+    QBrush brush(Qt::lightGray);
+    painter.setPen(Qt::NoPen);
+    painter.translate(mapX_ * scaleMeter, -mapY_ * scaleMeter);
+    painter.rotate(-mapAngle_ * 180. / M_PI);
+    for(int x = 0; x < mapWidth_; ++x)
+    {
+        for(int y = 0; y < mapHeight_; ++y)
+        {
+            int8_t occupacy = map_[x + y * mapWidth_];
+            if(occupacy == -1)
+            {
+                continue;
+            }
+            else
+            {
+                if(occupacy == 100)
+                {
+                    brush.setColor(Qt::darkBlue);
+                }
+                else
+                {
+                    brush.setColor(Qt::lightGray);
+                }
+            }
+            painter.setBrush(brush);
+            painter.drawRect(
+                        QRectF((x * mapResolution_ -
+                                mapResolution_ / 2) *
+                               scaleMeter,
+                               -(y * mapResolution_ -
+                                mapResolution_ / 2) *
+                               scaleMeter,
+                               mapScale,
+                               mapScale));
+        }
+    }
+    painter.restore();
+}
     // X - forward moving
     painter.translate(yPosition_  * scaleMeter, -xPosition_  * scaleMeter);
     painter.rotate(anglePosition_ * 180 / M_PI);
@@ -91,5 +133,18 @@ void OdometryMap::setLaser(float angleMin, float angleIncrement,
     laserAngleMin_ = angleMin;
     laserAngleIncrement_ = angleIncrement;
     laserRanges_ = ranges;
+}
+
+void OdometryMap::setMap(float xOrigin, float yOrigin, float angle,
+                         int32_t width, int32_t height,
+                         float resolution, const vector<int8_t> map)
+{
+    map_ = map;
+    mapX_ = xOrigin;
+    mapY_ = yOrigin;
+    mapAngle_ = angle;
+    mapWidth_ = width;
+    mapHeight_ = height;
+    mapResolution_ = resolution;
 }
 

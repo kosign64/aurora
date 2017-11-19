@@ -77,6 +77,11 @@ MainWindow::MainWindow(int argc, char *argv[], QWidget *parent) :
     connect(rosNode_, &NodeQt::sendLaser, map_,
             &OdometryMap::setLaser);
 
+    qRegisterMetaType<int32_t>("int32_t");
+    qRegisterMetaType< vector<int8_t> >("vector<int8_t>");
+    connect(rosNode_, &NodeQt::sendMap, map_,
+            &OdometryMap::setMap);
+
     rosNode_->start();
 
     Q_EMIT setVelocity(0);

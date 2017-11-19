@@ -26,15 +26,26 @@ private:
     float laserAngleIncrement_;
     vector<float> laserRanges_;
 
+    vector<int8_t> map_;
+    float mapResolution_;
+    int32_t mapWidth_;
+    int32_t mapHeight_;
+    float mapX_;
+    float mapY_;
+    float mapAngle_;
     const double ROBOT_WIDTH;
     const double ROBOT_LENGTH;
 
+    void drawMap(QPainter &painter, const double scaleMeter);
 Q_SIGNALS:
 
 public Q_SLOTS:
     void setRobotPosition(double x, double y, double angle);
     void setLaser(float angleMin, float angleIncrement,
                   const vector<float> ranges);
+    void setMap(float xOrigin, float yOrigin, float angle, int32_t width,
+                int32_t height, float resolution,
+                const vector<int8_t> map);
 };
 
 #endif // ODOMETRYMAP_H
