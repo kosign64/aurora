@@ -13,7 +13,9 @@ MainWindow::MainWindow(int argc, char *argv[], QWidget *parent) :
     QMainWindow(parent),
     move_(false),
     xPosition_(0),
-    yPosition_(0)
+    yPosition_(0),
+    anglePosition_(0),
+    externalOdometry_(false)
 {
     qRegisterMetaType< vector<float> >("vector<float>");
     mainWidget_ = new QWidget(this);
@@ -24,6 +26,7 @@ MainWindow::MainWindow(int argc, char *argv[], QWidget *parent) :
     velocityEdit_ = new QLineEdit("120", mainWidget_);
     estimatedPositionLabel_ = new QLabel("X: 0м, Y: 0м, angle: 0", mainWidget_);
     resetOdometryButton_ = new QPushButton("Reset Odometry", mainWidget_);
+    selectOdometryButton_ = new QPushButton("External odometry", mainWidget_);
     map_ = new OdometryMap(mainWidget_);
 
     QDoubleValidator *validator = new QDoubleValidator(-120.0, 120.0, 2, this);
@@ -39,6 +42,7 @@ MainWindow::MainWindow(int argc, char *argv[], QWidget *parent) :
     mainLayout_->addWidget(startStopButton_, 0, 0, 1, 1, Qt::AlignCenter);
     mainLayout_->addWidget(velocityEdit_, 0, 1, 1, 1, Qt::AlignCenter);
     mainLayout_->addWidget(angleSlider_, 1, 0, 1, 2, Qt::AlignCenter);
+    mainLayout_->addWidget(selectOdometryButton_,2, 0, 1, 1, Qt::AlignCenter);
     mainLayout_->addWidget(resetOdometryButton_, 2, 1, 1, 1, Qt::AlignCenter);
     mainLayout_->addWidget(estimatedPositionLabel_, 3, 0, 1, 2, Qt::AlignCenter);
     mainLayout_->addWidget(map_, 4, 0, 2, 2, Qt::AlignCenter);
@@ -57,6 +61,8 @@ MainWindow::MainWindow(int argc, char *argv[], QWidget *parent) :
             this, &MainWindow::onVelocityEditValueChange);
     connect(resetOdometryButton_, &QPushButton::clicked,
             this, &MainWindow::onResetOdometryButtonClick);
+    connect(selectOdometryButton_, &QPushButton::clicked, this,
+            &MainWindow::onSelectOdometryButtonClick);
 
     connect(this, &MainWindow::setVelocity, rosNode_, &NodeQt::setVelocity);
     connect(this, &MainWindow::setSteeringAngle,
@@ -183,5 +189,27 @@ void MainWindow::onResetOdometryButtonClick()
     xPosition_ = 0.;
     yPosition_ = 0.;
     anglePosition_ = 0.;
+}
+
+void MainWindow::onSelectOdometryButtonClick()
+{
+    if(externalOdometry_)
+    {
+        externalOdometry_ = false;
+        selectOdometryButton_->setText("External odometry");
+        disconnect(rosNode_, &NodeQt::sendOdometry, map_,
+                   &OdometryMap::setRobotPosition);
+        connect(this, &MainWindow::sendRobotPosition, map_,
+                           &OdometryMap::setRobotPosition);
+    }
+    else
+    {
+        externalOdometry_ = true;
+        selectOdometryButton_->setText("Internal odometry");
+        disconnect(this, &MainWindow::sendRobotPosition, map_,
+                   &OdometryMap::setRobotPosition);
+        connect(rosNode_, &NodeQt::sendOdometry, map_,
+                &OdometryMap::setRobotPosition);
+    }
 }
 

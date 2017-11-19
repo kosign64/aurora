@@ -16,6 +16,7 @@ public:
     void getLaser(float angleMin, float angleIncrement,
                   const vector<float> &ranges);
     ~NodeQt();
+    void setOdometry(double x, double y, double angle);
 
     void run();
 
@@ -25,11 +26,13 @@ private:
     ros::Publisher steeringAnglePublisher_;
     ros::Subscriber jointSubscriber_;
     ros::Subscriber laserSubscriber_;
+    ros::Subscriber odometrySubscriber_;
 
 Q_SIGNALS:
     void sendParams(double velocity, double steeringAngle, double dt);
     void sendLaser(float angleMin, float angleIncrement,
                    const vector<float> ranges);
+    void sendOdometry(double x, double y, double angle);
 
 public Q_SLOTS:
     void setVelocity(double velocity);

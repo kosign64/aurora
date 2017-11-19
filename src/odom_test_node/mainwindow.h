@@ -29,6 +29,7 @@ private:
     // Widgets
     QPushButton *startStopButton_;
     QSlider *angleSlider_;
+    QPushButton *selectOdometryButton_;
     QPushButton *resetOdometryButton_;
     QLineEdit *velocityEdit_;
     QLabel *estimatedPositionLabel_;
@@ -42,6 +43,8 @@ private:
 
     NodeQt *rosNode_;
 
+    bool externalOdometry_;
+
 Q_SIGNALS:
     void setVelocity(double velocity);
     void setSteeringAngle(double angle);
@@ -54,6 +57,7 @@ private Q_SLOTS:
     void onAngleSliderValueChange();
     void onVelocityEditValueChange();
     void onResetOdometryButtonClick();
+    void onSelectOdometryButtonClick();
 };
 
 #endif // MAINWINDOW_H

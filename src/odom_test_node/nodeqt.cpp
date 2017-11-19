@@ -2,6 +2,8 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/LaserScan.h>
+#include <nav_msgs/Odometry.h>
+#include <tf/tf.h>
 #include <stdint-gcc.h>
 #include <ros/time.h>
 
@@ -23,6 +25,22 @@ static void laserCallback(const sensor_msgs::LaserScan &msg)
                          msg.ranges);
 }
 
+
+static void odometryCallback(const nav_msgs::Odometry &msg)
+{
+    tf::Quaternion q(
+                msg.pose.pose.orientation.x,
+                msg.pose.pose.orientation.y,
+                msg.pose.pose.orientation.z,
+                msg.pose.pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    globalThis->setOdometry(msg.pose.pose.position.x,
+                            msg.pose.pose.position.y,
+                            yaw);
+}
+
 NodeQt::NodeQt(int argc, char *argv[])
 {
     globalThis = this;
@@ -32,6 +50,8 @@ NodeQt::NodeQt(int argc, char *argv[])
     steeringAnglePublisher_ = node_->advertise<std_msgs::Float64>("/ur_hardware_driver/steering_controller/command", 1000);
     jointSubscriber_ = node_->subscribe("/joint_states", 1000, jointCallback);
     laserSubscriber_ = node_->subscribe("/scan", 1000, laserCallback);
+    odometrySubscriber_ = node_->subscribe("/rtabmap/odom", 1000,
+                                           odometryCallback);
 }
 
 void NodeQt::getPositions(double velocity, double angle, double dt)
@@ -55,6 +75,12 @@ void NodeQt::getLaser(float angleMin, float angleIncrement,
                       const vector<float> &ranges)
 {
     Q_EMIT sendLaser(angleMin, angleIncrement, ranges);
+}
+
+
+void NodeQt::setOdometry(double x, double y, double angle)
+{
+    Q_EMIT sendOdometry(y, x, -angle + M_PI / 2);
 }
 
 NodeQt::~NodeQt()
