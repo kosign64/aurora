@@ -3,5 +3,5 @@
   <include file="$(find aurora)/launch/kinect_to_laser.launch" />
   <include file="$(find ur_hardware_driver)/launch/ur_hardware_driver.launch" />
   <node pkg="gmapping" name="slam_gmapping" type="slam_gmapping" />
-  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find aurora)/launch/config/map.rviz" />
+  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find aurora)/launch/config/gmapping_map.rviz" />
 </launch>
