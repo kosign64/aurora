@@ -1,11 +1,16 @@
 #include "odometrymap.h"
 #include <ros/ros.h>
 #include <QPainter>
+#include <QWheelEvent>
 
 OdometryMap::OdometryMap(QWidget *parent) : QWidget(parent),
     xPosition_(0),
     yPosition_(0),
     anglePosition_(0),
+    scale_(26),
+    translateX_(0),
+    translateY_(0),
+    mousePressed_(false),
     // Measured!
     ROBOT_LENGTH(1),
     ROBOT_WIDTH(0.65)
@@ -23,13 +28,11 @@ void OdometryMap::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    const double scaleMeter = width() / 26.;
-    QPen pen(Qt::white);
+    const double scaleMeter = width() / scale_;
     QBrush brush(Qt::black);
     painter.setPen(Qt::NoPen);
     painter.setBrush(brush);
     painter.drawRect(0, 0, width(), height());
-    painter.setPen(pen);
     painter.translate(width() / 2., height() / 2.);
     painter.translate(translateX_, translateY_);
     if(!map_.empty()) drawMap(painter, scaleMeter);
@@ -37,6 +40,36 @@ void OdometryMap::paintEvent(QPaintEvent *)
     drawRobot(painter, scaleMeter);
     if(!laserRanges_.empty()) drawLaser(painter, scaleMeter);
 }
+
+void OdometryMap::wheelEvent(QWheelEvent *event)
+{
+    scale_ += event->angleDelta().y() / 50.;
+    if(scale_ < 1) scale_ = 1;
+}
+
+void OdometryMap::mousePressEvent(QMouseEvent *event)
+{
+    if(event->button() != Qt::LeftButton) return;
+    mousePressed_ = true;
+    mouseStart_ = event->pos();
+}
+
+void OdometryMap::mouseMoveEvent(QMouseEvent *event)
+{
+    if(mousePressed_)
+    {
+        QPoint delta = event->pos() - mouseStart_;
+        translateX_ += delta.x();
+        translateY_ += delta.y();
+        mouseStart_ = event->pos();
+    }
+}
+
+void OdometryMap::mouseReleaseEvent(QMouseEvent *)
+{
+    mousePressed_ = false;
+}
+
 void OdometryMap::drawGrid(QPainter &painter, const double scaleMeter)
 {
     QPen pen(Qt::white);
@@ -44,7 +77,7 @@ void OdometryMap::drawGrid(QPainter &painter, const double scaleMeter)
 
     for(double x = 0; x < (width() * 2.); x += scaleMeter)
     {
-        painter.drawLine(x, -height() / 2., x, height() / 2.);
+        painter.drawLine(x, (-height() * 2.), x, (height() * 2.));
     }
     for(double x = 0; x > (-width() * 2.); x -= scaleMeter)
     {
@@ -135,6 +168,11 @@ void OdometryMap::drawLaser(QPainter &painter, const double scaleMeter)
     painter.save();
     QBrush brush(Qt::green);
     painter.setBrush(brush);
+    painter.setPen(Qt::NoPen);
+    painter.translate(yPosition_  * scaleMeter,
+                      -xPosition_  * scaleMeter);
+    painter.rotate(anglePosition_ * 180 / M_PI);
+    painter.translate(0, -ROBOT_LENGTH * scaleMeter / 2.);
     painter.drawEllipse(QPointF(0, 0), 0.2 * scaleMeter,
                         0.2 * scaleMeter);
     painter.rotate(-laserAngleMin_ * 180. / M_PI);

@@ -16,6 +16,10 @@ public:
 protected:
     void timerEvent(QTimerEvent *);
     void paintEvent(QPaintEvent *);
+    void wheelEvent(QWheelEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *);
 
 private:
     double xPosition_;
@@ -33,6 +37,14 @@ private:
     float mapX_;
     float mapY_;
     float mapAngle_;
+
+    double scale_;
+    double translateX_;
+    double translateY_;
+
+    bool mousePressed_;
+    QPoint mouseStart_;
+
     const double ROBOT_WIDTH;
     const double ROBOT_LENGTH;
 
