@@ -14,6 +14,7 @@ catkin_package()
 #Qt packages
 set (CMAKE_PREFIX_PATH "/home/konstantin/Qt5.9/5.9.1/gcc_64")
 find_package(Qt5Widgets)
+find_package(Qt5Network)
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${CATKIN_INCLUDE_DIRS})
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -29,6 +30,13 @@ set(ODOM_TEST_SRC ${PROJECT_SOURCE_DIR}/src/odom_test_node/main.cpp
 add_executable(odom_test_node ${ODOM_TEST_SRC} ${QT_MOC_HPP})
 target_link_libraries(odom_test_node Qt5::Widgets ${catkin_LIBRARIES})
 install(TARGETS odom_test_node RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+set(ODOM_TEST_SRC ${PROJECT_SOURCE_DIR}/src/remote_control_server/main.cpp
+                  ${PROJECT_SOURCE_DIR}/src/remote_control_server/nodeqt.cpp)
+
+add_executable(remote_control_server_node ${ODOM_TEST_SRC} ${QT_MOC_HPP})
+target_link_libraries(remote_control_server_node Qt5::Widgets Qt5::Network ${catkin_LIBRARIES})
+install(TARGETS remote_control_server_node RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 add_executable(odom_node src/odom_node/odom_node.cpp)
 
