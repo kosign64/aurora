@@ -5,6 +5,8 @@
 
 class NodeQt;
 class OdometryMap;
+class AStar;
+class PathController;
 class QGridLayout;
 class QPushButton;
 class QSlider;
@@ -30,10 +32,13 @@ private:
     QPushButton *startStopButton_;
     QSlider *angleSlider_;
     QPushButton *selectOdometryButton_;
+    QPushButton *selectControlButton_;
     QPushButton *resetOdometryButton_;
     QLineEdit *velocityEdit_;
     QLabel *estimatedPositionLabel_;
     OdometryMap *map_;
+    AStar *astar_;
+    PathController *pathController_;
 
     bool move_;
 
@@ -44,6 +49,7 @@ private:
     NodeQt *rosNode_;
 
     bool externalOdometry_;
+    bool pathControl_;
 
 Q_SIGNALS:
     void setVelocity(double velocity);
@@ -58,6 +64,7 @@ private Q_SLOTS:
     void onVelocityEditValueChange();
     void onResetOdometryButtonClick();
     void onSelectOdometryButtonClick();
+    void onSelectControlButtonClick();
 };
 
 #endif // MAINWINDOW_H

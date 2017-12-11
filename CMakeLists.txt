@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
     nav_msgs
     geometry_msgs
     roscpp
+    roslib
     tf
     roslaunch
 )
@@ -25,7 +26,9 @@ add_definitions(-std=c++11 -fPIC)
 set(ODOM_TEST_SRC ${PROJECT_SOURCE_DIR}/src/odom_test_node/main.cpp
                   ${PROJECT_SOURCE_DIR}/src/odom_test_node/mainwindow.cpp
                   ${PROJECT_SOURCE_DIR}/src/odom_test_node/nodeqt.cpp
-                  ${PROJECT_SOURCE_DIR}/src/odom_test_node/odometrymap.cpp)
+                  ${PROJECT_SOURCE_DIR}/src/odom_test_node/odometrymap.cpp
+                  ${PROJECT_SOURCE_DIR}/src/odom_test_node/astar.cpp
+                  ${PROJECT_SOURCE_DIR}/src/odom_test_node/pathcontroller.cpp)
 
 add_executable(odom_test_node ${ODOM_TEST_SRC} ${QT_MOC_HPP})
 target_link_libraries(odom_test_node Qt5::Widgets ${catkin_LIBRARIES})

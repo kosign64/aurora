@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <vector>
 #include <QThread>
+#include "common.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ public:
                   const vector<float> &ranges);
     void setMap(float xOrigin, float yOrigin, float angle,
                 int32_t width, int32_t height, float resolution,
-                const vector<int8_t> &map);
+                const vector<int8_t> &mapData);
     void setOdometry(double x, double y, double angle);
 
     void run();
@@ -39,11 +40,12 @@ Q_SIGNALS:
     void sendMap(float xOrigin, float yOrigin, float angle, int32_t width,
                  int32_t height, float resolution,
                  const vector<int8_t> map);
+    void sendMapStruct(const Map &map);
     void sendOdometry(double x, double y, double angle);
 
 public Q_SLOTS:
     void setVelocity(double velocity);
-    void setGetSteeringAngle(double angle);
+    void setSteeringAngle(double angle);
 
 };
 

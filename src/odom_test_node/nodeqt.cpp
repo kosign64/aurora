@@ -55,7 +55,7 @@ static void odometryCallback(const nav_msgs::Odometry &msg)
 NodeQt::NodeQt(int argc, char *argv[])
 {
     globalThis = this;
-    ros::init(argc, argv, "aurora_odom_test");
+    ros::init(argc, argv, "node_name");
     node_ = new ros::NodeHandle();
     velocityPublisher_ = node_->advertise<std_msgs::Float64>("/ur_hardware_driver/velocity_controller/command", 1000);
     steeringAnglePublisher_ = node_->advertise<std_msgs::Float64>("/ur_hardware_driver/steering_controller/command", 1000);
@@ -90,20 +90,15 @@ void NodeQt::setLaser(float angleMin, float angleIncrement,
 
 void NodeQt::setMap(float xOrigin, float yOrigin, float angle,
                     int32_t width, int32_t height, float resolution,
-                    const vector<int8_t> &map)
+                    const vector<int8_t> &mapData)
 {
-    emit sendMap(xOrigin,
-                 yOrigin,
-                 angle,
-                 width,
-                 height,
-                 resolution,
-                 map);
+    Map map(resolution, xOrigin, yOrigin, width, height, mapData);
+    Q_EMIT sendMapStruct(map);
 }
 
 void NodeQt::setOdometry(double x, double y, double angle)
 {
-    Q_EMIT sendOdometry(y, x, -angle + M_PI / 2);
+    Q_EMIT sendOdometry(x, y, -angle + M_PI / 2);
 }
 
 NodeQt::~NodeQt()
@@ -148,7 +143,7 @@ void NodeQt::setVelocity(double velocity)
     velocityPublisher_.publish(message);
 }
 
-void NodeQt::setGetSteeringAngle(double angle)
+void NodeQt::setSteeringAngle(double angle)
 {
     std_msgs::Float64 message;
     message.data = angle;

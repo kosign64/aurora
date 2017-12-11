@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <vector>
+#include "common.h"
 
 using namespace std;
 
@@ -12,6 +13,8 @@ class OdometryMap : public QWidget
 public:
     explicit OdometryMap(QWidget *parent = nullptr);
     QSize sizeHint() const {return QSize(1200, 600);}
+    void clearPoints() {points_.clear();}
+    void addPoint(Point2D point) {points_.push_back(point);}
 
 protected:
     void timerEvent(QTimerEvent *);
@@ -20,6 +23,7 @@ protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *);
+    void keyPressEvent(QKeyEvent *event);
 
 private:
     double xPosition_;
@@ -30,13 +34,9 @@ private:
     float laserAngleIncrement_;
     vector<float> laserRanges_;
 
-    vector<int8_t> map_;
-    float mapResolution_;
-    int32_t mapWidth_;
-    int32_t mapHeight_;
-    float mapX_;
-    float mapY_;
-    float mapAngle_;
+    double scaleMeter_;
+
+    Map map_;
 
     double scale_;
     double translateX_;
@@ -45,6 +45,8 @@ private:
     bool mousePressed_;
     QPoint mouseStart_;
 
+    vector<Point2D> points_;
+
     const double ROBOT_WIDTH;
     const double ROBOT_LENGTH;
 
@@ -52,8 +54,10 @@ private:
     void drawMap(QPainter &painter, const double scaleMeter);
     void drawRobot(QPainter &painter, const double scaleMeter);
     void drawLaser(QPainter &painter, const double scaleMeter);
+    void drawPoints(QPainter &painter, const double scaleMeter);
 
 Q_SIGNALS:
+    void pressedPoint(const Point2D &p);
 
 public Q_SLOTS:
     void setRobotPosition(double x, double y, double angle);
@@ -62,6 +66,8 @@ public Q_SLOTS:
     void setMap(float xOrigin, float yOrigin, float angle, int32_t width,
                 int32_t height, float resolution,
                 const vector<int8_t> map);
+    void setMapStruct(const Map &map);
+    void setPoints(const std::vector<Point2D> &points) {points_ = points;}
 };
 
 #endif // ODOMETRYMAP_H

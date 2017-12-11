@@ -1,7 +1,12 @@
 #include "odometrymap.h"
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <QPainter>
 #include <QWheelEvent>
+#include <QKeyEvent>
+#include <QFile>
+#include <QTextStream>
+#include <QDate>
 
 OdometryMap::OdometryMap(QWidget *parent) : QWidget(parent),
     xPosition_(0),
@@ -12,11 +17,13 @@ OdometryMap::OdometryMap(QWidget *parent) : QWidget(parent),
     translateY_(0),
     mousePressed_(false),
     // Measured!
-    ROBOT_LENGTH(1),
-    ROBOT_WIDTH(0.65)
+    ROBOT_WIDTH(0.65),
+    ROBOT_LENGTH(1)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     startTimer(1000 / 50);
+    setFocus();
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void OdometryMap::timerEvent(QTimerEvent *)
@@ -28,30 +35,41 @@ void OdometryMap::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    const double scaleMeter = width() / scale_;
+    scaleMeter_ = width() / scale_;
     QBrush brush(Qt::black);
     painter.setPen(Qt::NoPen);
     painter.setBrush(brush);
     painter.drawRect(0, 0, width(), height());
     painter.translate(width() / 2., height() / 2.);
     painter.translate(translateX_, translateY_);
-    if(!map_.empty()) drawMap(painter, scaleMeter);
-    drawGrid(painter, scaleMeter);
-    drawRobot(painter, scaleMeter);
-    if(!laserRanges_.empty()) drawLaser(painter, scaleMeter);
+    if(!map_.map.empty()) drawMap(painter, scaleMeter_);
+    drawGrid(painter, scaleMeter_);
+    drawRobot(painter, scaleMeter_);
+    if(!laserRanges_.empty()) drawLaser(painter, scaleMeter_);
+    if(!points_.empty()) drawPoints(painter, scaleMeter_);
 }
 
 void OdometryMap::wheelEvent(QWheelEvent *event)
 {
-    scale_ += event->angleDelta().y() / 50.;
+    scale_ -= event->angleDelta().y() / 50.;
     if(scale_ < 1) scale_ = 1;
 }
 
 void OdometryMap::mousePressEvent(QMouseEvent *event)
 {
-    if(event->button() != Qt::LeftButton) return;
-    mousePressed_ = true;
-    mouseStart_ = event->pos();
+    if(event->button() == Qt::LeftButton)
+    {
+        mousePressed_ = true;
+        mouseStart_ = event->pos();
+    }
+    else if(event->button() == Qt::RightButton)
+    {
+        Point2D p;
+        p.x = (event->pos().x() - width() / 2 - translateX_) / scaleMeter_;
+        p.y = -(event->pos().y() - height() / 2 - translateY_) / scaleMeter_;
+
+        Q_EMIT pressedPoint(p);
+    }
 }
 
 void OdometryMap::mouseMoveEvent(QMouseEvent *event)
@@ -68,6 +86,50 @@ void OdometryMap::mouseMoveEvent(QMouseEvent *event)
 void OdometryMap::mouseReleaseEvent(QMouseEvent *)
 {
     mousePressed_ = false;
+}
+
+void OdometryMap::keyPressEvent(QKeyEvent *event)
+{
+    QString basePath = QString::fromStdString(ros::package::getPath("aurora"));
+    if(event->key() == Qt::Key_M)
+    {
+        ROS_INFO_STREAM("Save map");
+        QString filename = basePath +
+                QString("/maps/map(%1).txt").arg(QDate::currentDate().toString("dd.MM.yyyy"));
+        QFile file(filename);
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            ROS_ERROR_STREAM("Can't open file!");
+            return;
+        }
+        QTextStream fileStream(&file);
+        fileStream << map_.resolution << ";" << map_.width << ";" <<
+                      map_.height << ";" << map_.x << ";" << map_.y
+                   << endl;
+        for(auto mapValue : map_.map)
+        {
+            fileStream << mapValue << ";";
+        }
+        file.close();
+    }
+    if(event->key() == Qt::Key_P)
+    {
+        static int posNumber = 0;
+        ROS_INFO_STREAM("Save position" << posNumber);
+        QString filename =
+                basePath + QString("/maps/pos%1.txt").arg(posNumber);
+        QFile file(filename);
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            ROS_ERROR_STREAM("Can't open file!");
+            return;
+        }
+        QTextStream fileStream(&file);
+        fileStream << xPosition_ << ";" << yPosition_;
+        file.close();
+        posNumber++;
+    }
+    event->ignore();
 }
 
 void OdometryMap::drawGrid(QPainter &painter, const double scaleMeter)
@@ -97,16 +159,16 @@ void OdometryMap::drawGrid(QPainter &painter, const double scaleMeter)
 void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
 {
     painter.save();
-    const double mapScale = mapResolution_ * scaleMeter;
+    const double mapScale = map_.resolution * scaleMeter;
     QBrush brush(Qt::lightGray);
     painter.setPen(Qt::NoPen);
-    painter.translate(mapX_ * scaleMeter, -mapY_ * scaleMeter);
-    painter.rotate(-mapAngle_ * 180. / M_PI);
-    for(int x = 0; x < mapWidth_; ++x)
+    painter.translate(map_.x * scaleMeter, -map_.y * scaleMeter);
+    //painter.rotate(-mapAngle_ * 180. / M_PI);
+    for(int x = 0; x < map_.width; ++x)
     {
-        for(int y = 0; y < mapHeight_; ++y)
+        for(int y = 0; y < map_.height; ++y)
         {
-            int8_t occupacy = map_[x + y * mapWidth_];
+            int8_t occupacy = map_.map[x + y * map_.width];
             if(occupacy == -1)
             {
                 continue;
@@ -117,6 +179,10 @@ void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
                 {
                     brush.setColor(Qt::darkBlue);
                 }
+                else if(occupacy == 50)
+                {
+                    brush.setColor(Qt::green);
+                }
                 else
                 {
                     brush.setColor(Qt::lightGray);
@@ -124,11 +190,11 @@ void OdometryMap::drawMap(QPainter &painter, const double scaleMeter)
             }
             painter.setBrush(brush);
             painter.drawRect(
-                        QRectF((x * mapResolution_ -
-                                mapResolution_ / 2) *
+                        QRectF((x * map_.resolution -
+                                map_.resolution / 2) *
                                scaleMeter,
-                               -(y * mapResolution_ -
-                                mapResolution_ / 2) *
+                               -(y * map_.resolution -
+                                map_.resolution / 2) *
                                scaleMeter,
                                mapScale,
                                mapScale));
@@ -142,17 +208,18 @@ void OdometryMap::drawRobot(QPainter &painter, const double scaleMeter)
     painter.save();
     QPen pen(Qt::green);
     QBrush brush(Qt::gray);
+    const double robotWidth = ROBOT_WIDTH * scaleMeter;
+    const double robotLength = ROBOT_LENGTH * scaleMeter;
     // X - forward moving
-    painter.translate(yPosition_  * scaleMeter,
-                      -xPosition_  * scaleMeter);
+    painter.translate(xPosition_ * scaleMeter,
+                      -yPosition_ * scaleMeter);
     painter.rotate(anglePosition_ * 180 / M_PI);
+    painter.translate(0, robotLength / 2);
     brush.setColor(Qt::gray);
     pen.setColor(Qt::green);
     pen.setWidth(3);
     painter.setBrush(brush);
     painter.setPen(pen);
-    const double robotWidth = ROBOT_WIDTH * scaleMeter;
-    const double robotLength = ROBOT_LENGTH * scaleMeter;
     painter.drawRect(QRectF(-robotWidth / 2, -robotLength / 2,
                      robotWidth, robotLength));
     brush.setColor(Qt::black);
@@ -191,6 +258,31 @@ void OdometryMap::drawLaser(QPainter &painter, const double scaleMeter)
     painter.restore();
 }
 
+void OdometryMap::drawPoints(QPainter &painter, const double scaleMeter)
+{
+    painter.save();
+    painter.setBrush(Qt::red);
+    painter.setPen(Qt::NoPen);
+    for(Point2D &point : points_)
+    {
+        painter.drawEllipse(QPointF(point.x * scaleMeter,
+                                    -point.y * scaleMeter),
+                            0.05 * scaleMeter,
+                            0.05 * scaleMeter);
+    }
+    painter.setBrush(Qt::green);
+    Point2D &end = points_.back();
+    painter.drawEllipse(QPointF(points_[0].x * scaleMeter,
+                                -points_[0].y * scaleMeter),
+                        0.05 * scaleMeter,
+                        0.05 * scaleMeter);
+    painter.drawEllipse(QPointF(end.x * scaleMeter,
+                                -end.y * scaleMeter),
+                        0.05 * scaleMeter,
+                        0.05 * scaleMeter);
+    painter.restore();
+}
+
 void OdometryMap::setRobotPosition(double x, double y, double angle)
 {
     xPosition_ = x;
@@ -210,12 +302,16 @@ void OdometryMap::setMap(float xOrigin, float yOrigin, float angle,
                          int32_t width, int32_t height,
                          float resolution, const vector<int8_t> map)
 {
-    map_ = map;
-    mapX_ = xOrigin;
-    mapY_ = yOrigin;
-    mapAngle_ = angle;
-    mapWidth_ = width;
-    mapHeight_ = height;
-    mapResolution_ = resolution;
+    map_.map = map;
+    map_.x = xOrigin;
+    map_.y = yOrigin;
+    //mapAngle_ = angle;
+    map_.width = width;
+    map_.height = height;
+    map_.resolution = resolution;
 }
 
+void OdometryMap::setMapStruct(const Map &map)
+{
+    map_ = map;
+}
