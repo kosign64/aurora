@@ -29,7 +29,7 @@ Package implements A* path planning algorithm and movement control for Aurora Un
 ### Usage:
 1. Build map using RTAB-MAP and control robot:
 ```sh
-	$ roslaunch aurora rtabmap_build_map.launch 
+    $ roslaunch aurora rtabmap_build_map.launch 
 ```
 parameters:\
 a) openni2 (default: false) - use OpenNI2 instead of libfreenect (for Asus Xtion Live Pro instead of Microsoft Kinect)\
@@ -37,7 +37,7 @@ b) ur_hardware_driver (default: true) - use ur_hardware_driver in order to contr
 
 2. Build map using gmapping (doesn't work well yet):
 ```sh
-	$ roslaunch aurora gmapping_build_map.launch
+    $ roslaunch aurora gmapping_build_map.launch
 ```
 
 [ROS]: http://www.ros.org
