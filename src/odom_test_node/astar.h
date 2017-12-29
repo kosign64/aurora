@@ -27,6 +27,7 @@ private:
     struct AStarPoint
     {
         double weight;
+        double pathWeight;
         std::vector<MapPoint> smallestPath;
         bool checked;
         uint8_t direction;
@@ -58,7 +59,7 @@ public Q_SLOTS:
     void setStart(float x, float y) {start_ = Point2D{x, y};}
     void setStop(float x, float y);
     void setStopPoint(const Point2D &point) {setStop(point.x, point.y);}
-    void setMap(const Map &map) {map_ = map; reduceMap(); dilateMap();}
+    void setMap(const Map &map);
     void setOdometry(double x, double y, double angle);
 };
 

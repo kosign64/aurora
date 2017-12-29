@@ -23,11 +23,12 @@ void AStar::findPath()
     }
     startPath_ = xyToMapPoint(start_);
     stopPath_ = xyToMapPoint(stop_);
-    if(map_(stopPath_) ||
-            !checkNeighbors(stopPath_, map_)) return;
+    if(map_(stopPath_) /*||
+            !checkNeighbors(stopPath_, map_)*/) return;
     data_.clear();
     AStarPoint startPoint(startPath_);
     startPoint.weight = 0;
+    startPoint.pathWeight = 0;
     data_.push_back(startPoint);
     int index = -1;
     try
@@ -195,10 +196,10 @@ void AStar::checkPoint(const MapPoint &point,
             map_(point.x, point.y) == -1) return;
     if(point.x < 1 || point.x >= (map_.width - 1) ||
             point.y < 1 || point.y >= (map_.height - 1)) return;
-    if(!checkNeighbors(point, map_)) return;
+    //if(!checkNeighbors(point, map_)) return;
     AStarPoint starPoint(point);
-    starPoint.weight = mapDistance(point, stopPath_) +
-            mapDistance(point, prev.point) + prev.weight;
+    starPoint.pathWeight = prev.pathWeight + mapDistance(point, prev.point);
+    starPoint.weight = mapDistance(point, stopPath_) * 1.2 + starPoint.pathWeight;
     int index = isDataContains(point);
     if(index != -1)
     {
@@ -213,6 +214,16 @@ void AStar::checkPoint(const MapPoint &point,
     starPoint.smallestPath = prev.smallestPath;
     starPoint.smallestPath.push_back(prev.point);
     data_.push_back(std::move(starPoint));
+}
+
+void AStar::setMap(const Map &map)
+{
+    map_ = map;
+    //reduceMap();
+    for(int i = 0; i < 8; ++i)
+    {
+        dilateMap();
+    }
 }
 
 void AStar::setStop(float x, float y)
