@@ -13,5 +13,6 @@
     <arg name="rviz" value="true" />
     <arg name="rviz_cfg" value="-d $(find aurora)/launch/config/rtabmap_map.rviz" />
   </include>
+  <node pkg="aurora" name="odom_test_node" type="odom_test_node" />
 
 </launch>
