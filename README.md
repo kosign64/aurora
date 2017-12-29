@@ -8,7 +8,7 @@ Package implements A* path planning algorithm and movement control for Aurora Un
 [Qt] - Qt5 C++ Framework\
 [RTAB-Map] - Visual SLAM\
 [gmapping] - 2D Odometry and Laser scanner based SLAM\
-[depthimage_to_laserscan] - Depth image conversation to laser scanner data\
+[depthimage_to_laserscan] - Depth image conversion to laser scanner data\
 [tf] - Coordinate systems transform\
 [OpenNI2_launch] - library for Asus Xtion Live Pro sensor\
 [libfreenect_stack] - library for Microsoft Kinect\
