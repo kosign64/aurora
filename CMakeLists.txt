@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package()
 
 #Qt packages
-set (CMAKE_PREFIX_PATH "/home/konstantin/Qt5.9/5.9.1/gcc_64")
+#set (CMAKE_PREFIX_PATH "/home/konstantin/Qt5.9/5.9.1/gcc_64")
 find_package(Qt5Widgets)
 find_package(Qt5Network)
 include_directories(${Qt5Widgets_INCLUDE_DIRS} ${CATKIN_INCLUDE_DIRS})
