@@ -22,7 +22,7 @@ Package implements A* path planning algorithm and movement control for Aurora Un
 3. clone this repository to your src directory in ROS workspace
 4. Build package:
 ```sh
-	$ cd ros_workspace
+    $ cd ros_workspace
     $ catkin_make
 ```
 
