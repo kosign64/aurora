@@ -40,6 +40,9 @@ b) ur_hardware_driver (default: true) - use ur_hardware_driver in order to contr
     $ roslaunch aurora gmapping_build_map.launch
 ```
 
+### Example of work
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/61YKlTOySfQ/0.jpg)](http://www.youtube.com/watch?v=61YKlTOySfQ "Aurora Unior")
+
 [ROS]: http://www.ros.org
 [Qt]: https://www.qt.io
 [RTAB-Map]: http://wiki.ros.org/rtabmap_ros
